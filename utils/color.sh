@@ -188,53 +188,61 @@ rgb_text() {
 # in "${1}" and then just plain text for whatever (if anything)
 # is in "${2}".
 function orange() {
-    local -r orange_text="$(rgb_text "242 81 29" "${1:-}")"
+    local -r text="$(rgb_text "242 81 29" "${1:-}")"
     local -r rest="${2:-}"
 
-    printf '%s%s\n' "${orange_text}" "${rest}"
+    printf '%s%s\n' "${text}" "${rest}"
 }
 
-# orange <orange-text> <rest-text>
-#
-#
-function orange_backed() {
-    local -r orange_text="$(rgb_text "242 81 29/71 49 55" "${1:-}")"
+# orange_highlighted <colorized-text> <rest-text>
+function orange_highlighted() {
+    local -r text="$(rgb_text "242 81 29/71 49 55" "${1:-}")"
     local -r rest="${2:-}"
 
-    printf '%s%s\n' "${orange_text}" "${rest}"
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
+# orange_backed <colorized-text> <rest-text>
+function orange_backed() {
+    local -r text="$(rgb_text "16 16 16/242 81 29" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
 }
 
 
 # blue <colorized-text> <rest-text>
-#
-# produces blue text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
 function blue() {
-    local -r orange_text="$(rgb_text "4 51 255" "${1:-}")"
+    local -r text="$(rgb_text "4 51 255" "${1:-}")"
     local -r rest="${2:-}"
 
-    printf '%s%s\n' "${orange_text}" "${rest}"
+    printf '%s%s\n' "${text}" "${rest}"
 }
 
 # blue_backed <colorized-text> <rest-text>
-#
-# produces blue text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is
-# in "${2}".
 function blue_backed() {
-    local -r orange_text="$(rgb_text "4 51 255/4 153 255" "${1:-}")"
+    local -r text="$(rgb_text "235 235 235/4 51 255" "${1:-}")"
     local -r rest="${2:-}"
 
-    printf '%s%s\n' "${orange_text}" "${rest}"
+    printf '%s%s\n' "${text}" "${rest}"
+}
+# light_blue_backed <colorized-text> <rest-text>
+function light_blue_backed() {
+    local -r text="$(rgb_text "8 8 8/65 128 255" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
 }
 
-# blue <colorized-text> <rest-text>
-#
-# produces blue text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
+# dark_blue_backed <colorized-text> <rest-text>
+function dark_blue_backed() {
+    local -r text="$(rgb_text "235 235 235/1 25 147" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
+# tangerine <colorized-text> <rest-text>
 function tangerine() {
     local -r text="$(rgb_text "255 147 0" "${1:-}")"
     local -r rest="${2:-}"
@@ -242,14 +250,17 @@ function tangerine() {
     printf '%s%s\n' "${text}" "${rest}"
 }
 
-# blue_backed <colorized-text> <rest-text>
-#
-# produces blue text with a light background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is
-# in "${2}".
-function tangerine_backed {
+# tangerine_highlighted <colorized-text> <rest-text>
+function tangerine_highlighted {
     local -r text="$(rgb_text "255 147 0 / 125 77 0" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
+# tangerine_backed <colorized-text> <rest-text>
+function tangerine_backed {
+    local -r text="$(rgb_text "16 16 16 / 255 147 0" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
@@ -261,10 +272,10 @@ function tangerine_backed {
 # and then just plain text (if anything) for what is
 # in "${2}".
 function slate_blue() {
-    local -r orange_text="$(rgb_text "63 99 139" "${1:-}")"
+    local -r text="$(rgb_text "63 99 139" "${1:-}")"
     local -r rest="${2:-}"
 
-    printf '%s%s\n' "${orange_text}" "${rest}"
+    printf '%s%s\n' "${text}" "${rest}"
 }
 
 # slate_blue_backed <slate_blue_backed-text> <rest-text>
@@ -274,17 +285,13 @@ function slate_blue() {
 # (if anything) for what is
 # in "${2}".
 function slate_blue_backed() {
-    local -r orange_text="$(rgb_text "63 99 139/203 237 255" "${1:-}")"
+    local -r text="$(rgb_text "63 99 139/203 237 255" "${1:-}")"
     local -r rest="${2:-}"
 
-    printf '%s%s\n' "${orange_text}" "${rest}"
+    printf '%s%s\n' "${text}" "${rest}"
 }
 
-# blue <colorized-text> <rest-text>
-#
-# produces blue text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
+# green <colorized-text> <rest-text>
 function green() {
     local -r text="$(rgb_text "0 143 0" "${1:-}")"
     local -r rest="${2:-}"
@@ -292,18 +299,31 @@ function green() {
     printf '%s%s\n' "${text}" "${rest}"
 }
 
-# blue_backed <colorized-text> <rest-text>
-#
-# produces blue text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is
-# in "${2}".
+# green_backed <colorized-text> <rest-text>
 function green_backed() {
-    local -r text="$(rgb_text "66 66 66/0 229 0" "${1:-}")"
+    local -r text="$(rgb_text "8 8 8/0 229 0" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
 }
+
+# light_green_backed <colorized-text> <rest-text>
+function light_green_backed() {
+    local -r text="$(rgb_text "8 8 8/0 143 0" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
+
+# dark_green_backed <colorized-text> <rest-text>
+function dark_green_backed() {
+    local -r text="$(rgb_text "235 235 235/0 65 0" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
 
 # lime <colorized-text> <rest-text>
 #
@@ -368,29 +388,6 @@ function dark_pink_backed() {
     printf '%s%s\n' "${text}" "${rest}"
 }
 
-# blue <colorized-text> <rest-text>
-#
-# produces blue text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
-function dark_green() {
-    local -r text="$(rgb_text "0 87 0" "${1:-}")"
-    local -r rest="${2:-}"
-
-    printf '%s%s\n' "${text}" "${rest}"
-}
-
-# blue_backed <colorized-text> <rest-text>
-#
-# produces blue text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is in "${2}".
-function dark_green_backed() {
-    local -r text="$(rgb_text "66 66 66/0 143 0" "${1:-}")"
-    local -r rest="${2:-}"
-
-    printf '%s%s\n' "${text}" "${rest}"
-}
 
 
 
@@ -406,13 +403,26 @@ function yellow() {
     printf '%s%s\n' "${text}" "${rest}"
 }
 
+# light_yellow_backed <colored-text> <rest-text>
+function light_yellow_backed() {
+    local -r text="$(rgb_text "8 8 8/255 252 121" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
 # yellow_backed <colored-text> <rest-text>
-#
-# produces blue text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
 function yellow_backed() {
-    local -r text="$(rgb_text "33 33 33/255 252 121" "${1:-}")"
+    local -r text="$(rgb_text "8 8 8/255 251 0" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
+
+# dark_yellow_backed <colored-text> <rest-text>
+function dark_yellow_backed() {
+    local -r text="$(rgb_text "255 255 255/146 144 0" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
@@ -431,60 +441,27 @@ function red() {
 }
 
 # red_backed <colored-text> <rest-text>
-#
-# produces dark red text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is in "${2}".
 function red_backed() {
-    local -r text="$(rgb_text "214 214 230/255 38 0" "${1:-}")"
+    local -r text="$(rgb_text "235 235 235/255 38 0" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
 }
 
-# dark_red <colored-text> <rest-text>
-#
-# produces blue text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
-function dark_red() {
-    local -r text="$(rgb_text "148 17 0" "${1:-}")"
-    local -r rest="${2:-}"
 
-    printf '%s%s\n' "${text}" "${rest}"
-}
 
 # dark_red_backed <colored-text> <rest-text>
-#
-# produces dark red text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is in "${2}".
 function dark_red_backed() {
-    local -r text="$(rgb_text "214 196 207/148 17 0" "${1:-}")"
+    local -r text="$(rgb_text "235 235 235/148 17 0" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
 }
 
-# light_red <colored-text> <rest-text>
-#
-# produces light_red text for content found in "${1}"
-# and then just plain text (if anything) for what is
-# in "${2}".
-function light_red() {
-    local -r text="$(rgb_text "255 126 121" "${1:-}")"
-    local -r rest="${2:-}"
-
-    printf '%s%s\n' "${text}" "${rest}"
-}
 
 # light_red_backed <colored-text> <rest-text>
-#
-# produces dark light_red text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is in "${2}".
 function light_red_backed() {
-    local -r text="$(rgb_text "33 33 33/255 126 121" "${1:-}")"
+    local -r text="$(rgb_text "8 8 8/255 126 121" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
@@ -503,24 +480,24 @@ function purple() {
 }
 
 # purple_backed <colored-text> <rest-text>
-#
-# produces dark purple text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is in "${2}".
 function purple_backed() {
-    local -r text="$(rgb_text "215 172 214/67 9 66" "${1:-}")"
+    local -r text="$(rgb_text "235 235 235/148 55 255" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"
 }
 
 # light_purple_backed <colored-text> <rest-text>
-#
-# produces dark purple text with a lighter background as backing
-# for content found in "${1}" and then just plain text
-# (if anything) for what is in "${2}".
 function light_purple_backed() {
-    local -r text="$(rgb_text "215 172 214/122 71 121" "${1:-}")"
+    local -r text="$(rgb_text "8 8 8/215 131 255" "${1:-}")"
+    local -r rest="${2:-}"
+
+    printf '%s%s\n' "${text}" "${rest}"
+}
+
+# dark_purple_backed <colored-text> <rest-text>
+function dark_purple_backed() {
+    local -r text="$(rgb_text "235 235 235/83 27 147" "${1:-}")"
     local -r rest="${2:-}"
 
     printf '%s%s\n' "${text}" "${rest}"

@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+# file_dependencies <file>
+#
+# provides the utility functions which a given file uses
+function file_dependencies() {
+    local -r file="${1:?no file passed to file_dependencies()!}"
+
+    # TODO
+}
+
 
 # bash_functions_summary <location> <...>
 #

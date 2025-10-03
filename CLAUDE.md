@@ -1,4 +1,6 @@
-# Repo Overview
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Repository Overview
 
@@ -25,20 +27,41 @@ The scripts follow a hierarchical dependency structure:
 - **proxmox.sh**: Proxmox VE API integration utilities
 - **build.sh**: Source compilation scripts (e.g., neovim from source)
 
+## Static Analysis
+
+The repository includes powerful static analysis capabilities via `static.sh`:
+
+```bash
+# Analyze functions in a directory/file
+./static.sh <path>
+
+# Get JSON output of all functions (used by reports/fns.sh)
+bash_functions_summary <path>
+```
+
+The static analysis extracts:
+- Function names, arguments, descriptions from comment blocks
+- File locations and line ranges
+- Duplicate function detection
+
 ## Common Development Commands
 
 ```bash
 # Source the adaptive configuration
 source ~/.config/sh/adaptive.sh
 
-# Run the alias reporter to see configured aliases
-./aliases.sh
+# View all available utility functions
+./reports/fns.sh
+
+# Filter functions by glob pattern
+./reports/fns.sh "is_*"        # functions starting with "is_"
+./reports/fns.sh "*debug*"     # functions containing "debug"
+
+# Test color utilities
+./tests/color.sh
 
 # Initialize a Debian system with standard tools
 ./initialize.sh
-
-# Build neovim from source
-./build.sh neovim
 ```
 
 ## Code Conventions
@@ -50,6 +73,25 @@ source ~/.config/sh/adaptive.sh
 - Error handling via `panic()` for fatal errors, `error()` for recoverable ones
 - Debug output via `debug "function_name" "message"` pattern
 - Return values: 0 for success/true, 1 for failure/false
+
+### Function Documentation
+
+Document functions with comment blocks immediately above the function definition:
+
+```bash
+# function_name <arg1> [optional_arg2]
+#
+# Description of what the function does.
+# Can span multiple lines.
+function function_name() {
+    # implementation
+}
+```
+
+The static analysis tool extracts:
+- First line matching function name becomes the arguments specification
+- Remaining lines become the description
+- Empty line after first line is automatically stripped
 
 ### Variable Conventions
 
@@ -66,3 +108,25 @@ source ~/.config/sh/adaptive.sh
   - If you want to use these tools always create a function which abstracts the functionality and make sure that this function has a fallback or at least a graceful error message
 - Use `get_shell()` to detect current shell
 - Shell-specific operations wrapped in conditionals (`is_bash()`, `is_zsh()`, `is_fish()`)
+
+### Color Utilities
+
+The `utils/color.sh` module provides extensive RGB-based colorization:
+
+- Use `setup_colors` to initialize standard ANSI color variables (`${RED}`, `${BOLD}`, etc.)
+- Use `rgb_text "R G B" "text"` for custom RGB foreground colors
+- Use `rgb_text "R G B / R2 G2 B2" "text"` for foreground + background
+- Use `rgb_text "/ R G B" "text"` for background only
+- Use `colorize` to convert `{{TAG}}` markers to color variables (e.g., `{{RED}}`, `{{BOLD}}`)
+- Predefined color functions: `orange`, `tangerine`, `slate_blue`, `lime`, `pink`, etc.
+- Each has variants: plain, `_backed` (dark text, colored bg), `_highlighted` (colored text + muted bg)
+- Background-only functions: `bg_*` (e.g., `bg_light_blue`, `bg_dark_gray`)
+- Use `remove_colors` to unset all color variables
+
+### Testing
+
+Run test scripts directly to see demonstrations:
+
+```bash
+./tests/color.sh    # Demonstrates color utilities with examples
+```

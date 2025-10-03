@@ -18,9 +18,9 @@ source "${UTILS}/logging.sh"
 source "${UTILS}/empty.sh"
 
 
-# lc() <str>
+# lc <string>
 #
-# converts the passed in <str> to lowercase
+# converts the passed in <string> to lowercase
 function lc() {
     local -r str="${*}"
     debug "lc(${str})" "$(echo "${str}" | tr '[:upper:]' '[:lower:]')"

@@ -20,6 +20,7 @@ function matches_glob() {
     # Check if pattern contains glob wildcards
     if [[ "$pattern" == *[\*\?\[]* ]]; then
         # Has wildcards - use glob matching
+        # shellcheck disable=SC2053
         if [[ "$content" == $pattern ]]; then
             return 0
         else
