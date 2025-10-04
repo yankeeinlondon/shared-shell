@@ -19,7 +19,7 @@ else
 fi
 
 # shellcheck source="./color.sh"
-source "${ROOT}/color.sh";
+source "${UTILS}/color.sh";
 # shellcheck source="./utils/typeof.sh"
 source "${UTILS}/typeof.sh"
 # shellcheck source="./utils/logging.sh"
@@ -117,7 +117,7 @@ function is_bound() {
 }
 
 # append_to_path <path>
-# 
+#
 # Appends the path passed in to the PATH env variable
 function append_to_path() {
     local -r new="${1:?No path passed into append_to_path()!}"
@@ -128,46 +128,7 @@ function append_to_path() {
     echo "${newPath}"
 }
 
-# has_command <cmd>
-#
-# checks whether a particular program passed in via $1 is installed 
-# on the OS or not (at least within the $PATH)
-function has_command() {
-    local -r cmd="${1:?cmd is missing}"
 
-    if command -v "${cmd}" &> /dev/null; then
-        return 0
-    else 
-        return 1
-    fi
-}
-
-
-function is_keyword() {
-    local _var=${1:?no parameter passed into is_array}
-    local declaration=""
-    # shellcheck disable=SC2086
-    declaration=$(LC_ALL=C type -t $1)
-
-    if [[ "$declaration" == "keyword" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-# tests whether a given string exists in the package.json file
-# located in the current directory.
-function in_package_json() {
-    local find="${1:?find string missing in call to in_package_json}"
-    local -r pkg="$(get_file "./package.json")"
-
-    if contains "${find}" "${pkg}"; then
-        return 0;
-    else
-        return 1;
-    fi
-}
 
 function not_in_package_json() {
     local find="${1:?find string missing in call to not_in_package_json}"
@@ -199,7 +160,7 @@ function npm_install_devdep() {
 
     if in_package_json "\"$pkg\":"; then
         log "- ${BOLD}${pkg}${RESET} already installed"
-    else 
+    else
         log ""
         if "${mgr}" install -D "${pkg}"; then
             log ""
@@ -258,12 +219,12 @@ function add_to_rc() {
 }
 
 # set_env(var, value)
-# 
+#
 # sets an ENV variables value but ONLY if it was previously not set
 function set_env() {
     local -r VAR="${1:?no variable name passed to set_env!}"
     local -r VAL="${2:?no value passed to set_env!}"
-    
+
     if is_empty "${VAR}"; then
         export "${VAR}"="${VAL}"
     fi
@@ -395,10 +356,10 @@ function add_completion() {
 
 # get_tui() → [whiptail|dialog|ERROR]
 #
-# tests whether "whiptail" or "display" 
-# (https://invisible-island.net/dialog/) packages are 
-# available on the execution platform. 
-# 
+# tests whether "whiptail" or "display"
+# (https://invisible-island.net/dialog/) packages are
+# available on the execution platform.
+#
 # For PVE hosts "whiptail" should always be available.
 function get_tui() {
     if has_command "whiptail"; then
@@ -419,14 +380,14 @@ function get_ssh_connection() {
 
         # shellcheck disable=SC2206
         local arr=(${SSH_CONNECTION})
-        
+
         # Verify that we have exactly four parts.
         if [[ ${#arr[@]} -eq 4 ]]; then
             local client_ip="${arr[0]}"
             # local client_port="${arr[1]}"
             local server_ip="${arr[2]}"
             local server_port="${arr[3]}"
-            
+
             echo "${client_ip} → ${server_ip} (port ${server_port})"
             return 0
         else

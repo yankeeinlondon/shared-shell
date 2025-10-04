@@ -64,19 +64,16 @@ function report_fns_to_console() {
     local -r fns="$("${ROOT}/static.sh" "${UTILS}")"
 
     # shellcheck source="../color.sh"
-    source "${ROOT}/color.sh"
+    source "${UTILS}/color.sh"
     # enable all ENV variables for colorization
     setup_colors
 
-    # Source dependencies for link.sh (suppress errors from missing dependencies)
-    {
-        # shellcheck source="../utils/errors.sh"
-        source "${ROOT}/utils/errors.sh"
-        # shellcheck source="../utils/typeof.sh"
-        source "${ROOT}/utils/typeof.sh"
-        # shellcheck source="../utils/link.sh"
-        source "${ROOT}/utils/link.sh"
-    } 2>/dev/null || true
+    # shellcheck source="../utils/errors.sh"
+    source "${UTILS}/errors.sh"
+    # shellcheck source="../utils/typeof.sh"
+    source "${UTILS}/typeof.sh"
+    # shellcheck source="../utils/link.sh"
+    source "${UTILS}/link.sh"
 
     # First pass: collect filtered function names and metadata for duplicate detection
     local -a collected_names=()

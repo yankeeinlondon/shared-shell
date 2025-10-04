@@ -25,12 +25,12 @@ UTILS="${ROOT}/utils"
 REPORTS="${ROOT}/reports"
 
 function login_message() {
-    source "${ROOT}/color.sh"
+    source "${UTILS}/color.sh"
     setup_colors
     log ""
     log "${DIM}* use the ${BOLD:-}${GREEN:-}about${RESET:-} ${ITALIC}function${RESET} to get details on this machine${RESET}"
 
-    remove_colors 
+    remove_colors
 }
 
 # Get the directory of the current script
@@ -38,8 +38,6 @@ CONFIG_LOCATION="${HOME}/.config/sh"
 COMPLETIONS="${HOME}/.completions"
 
 
-# shellcheck source="./color.sh"
-source "${ROOT}/color.sh"
 # shellcheck source="./utils/text.sh"
 source "${ROOT}/utils.sh"
 
@@ -76,7 +74,7 @@ fi
 if type uv &>/dev/null; then
     if is_fish; then
         uv generate-shell-completion fish
-    else 
+    else
         # Skip completion setup in non-interactive shells
         if [[ "$-" == *i* ]]; then
             UV=$(add_completion "uv" "$(rustup completions "$(get_shell)" rustup 2>/dev/null || echo)" 2>/dev/null || true)
@@ -86,7 +84,7 @@ if type uv &>/dev/null; then
     fi
 fi
 
-if has_command "pyenv"; then 
+if has_command "pyenv"; then
     add_to_rc "PYENV_ROOT=${HOME}/.pyenv"
     if dir_exists "${HOME}/.pyenv/bin"; then
         add_to_path "${HOME}/.pyenv/bin"
@@ -100,7 +98,7 @@ if has_command "pyenv"; then
     #     if if_zsh; then
     #         source "${COMPLETIONS}/_pyenv.zsh"
     #     fi
-    # else 
+    # else
     #     echo "- ${BOLD}warning:${RESET} expected a completions file at: ${BLUE}${COMPLETIONS}/_pyenv${RESET}"
     #     echo "  but not found!"
     # fi
@@ -197,7 +195,7 @@ if ! file_exists "${HOME}/.adaptive-initialized"; then
         touch "${HOME}/.adaptive-initialized"
 
         bash "${HOME}/.config/sh/initialize.sh"
-    else 
+    else
         log "Ok bye."
         log "${DIM}- run ${BOLD}${BLUE}initialize${RESET}${DIM} at any time to "
 
@@ -207,7 +205,7 @@ if ! file_exists "${HOME}/.adaptive-initialized"; then
 fi
 
 
-if not_empty "${WEZTERM_CONFIG_DIR}"; then 
+if not_empty "${WEZTERM_CONFIG_DIR}"; then
   if file_exists "${UTILS}/wezterm.sh"; then
     # shellcheck source="./utils/wezterm.sh"
     source "${UTILS}/wezterm.sh"
@@ -236,7 +234,7 @@ fi
 
 source "${ROOT}/user-functions.sh"
 
-if type "starship" &>/dev/null; then 
+if type "starship" &>/dev/null; then
     if is_zsh; then
         eval "$(starship init zsh)"
     elif is_bash; then

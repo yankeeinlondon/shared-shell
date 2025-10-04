@@ -74,7 +74,7 @@ function is_fish() {
 # Check for Docker container
 is_docker() {
     # Check common Docker indicators
-    if [ -f /.dockerenv ] || 
+    if [ -f /.dockerenv ] ||
        { [ -f /proc/1/cgroup ] && grep -qi "docker\|kubepods" /proc/1/cgroup; }; then
         return 0
     fi
@@ -84,8 +84,8 @@ is_docker() {
 # Check for LXC container
 is_lxc() {
     # Check common LXC indicators
-    if grep -q 'container=lxc' /proc/1/environ 2>/dev/null || 
-       [ -f /run/.containerenv ] || 
+    if grep -q 'container=lxc' /proc/1/environ 2>/dev/null ||
+       [ -f /run/.containerenv ] ||
        ( [ -f /proc/1/cgroup ] && grep -qi 'lxc' /proc/1/cgroup ); then
         return 0
     fi
@@ -95,8 +95,8 @@ is_lxc() {
 # Check for VM
 is_vm() {
     # Check common VM indicators
-    if grep -q 'hypervisor' /proc/cpuinfo 2>/dev/null || 
-       ( [ -f /sys/class/dmi/id/product_name ] && 
+    if grep -q 'hypervisor' /proc/cpuinfo 2>/dev/null ||
+       ( [ -f /sys/class/dmi/id/product_name ] &&
          grep -qi -e 'qemu' -e 'kvm' /sys/class/dmi/id/product_name ); then
         return 0
     fi
@@ -128,4 +128,47 @@ function bash_version() {
     version=$(strip_before "version " "$version")
 
     echo "$version"
+}
+
+# has_command <cmd>
+#
+# checks whether a particular program passed in via $1 is installed
+# on the OS or not (at least within the $PATH)
+function has_command() {
+    local -r cmd="${1:?cmd is missing}"
+
+    if command -v "${cmd}" &> /dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+function is_keyword() {
+    local _var=${1:?no parameter passed into is_array}
+    local declaration=""
+    # shellcheck disable=SC2086
+    declaration=$(LC_ALL=C type -t $1)
+
+    if [[ "$declaration" == "keyword" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# in_package_json <find>
+#
+# tests whether a given string exists in the package.json file
+# located in the current directory.
+function in_package_json() {
+    local find="${1:?find string missing in call to in_package_json}"
+    local -r pkg="$(get_file "./package.json")"
+
+    if contains "${find}" "${pkg}"; then
+        return 0;
+    else
+        return 1;
+    fi
 }

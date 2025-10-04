@@ -1,12 +1,300 @@
 #!/usr/bin/env bash
 
+# Get the ROOT directory for this script
+if [ -z "${ADAPTIVE_SHELL:-}" ] || [[ "${ADAPTIVE_SHELL:-}" == "" ]]; then
+    STATIC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    ROOT="${STATIC_DIR}"
+else
+    ROOT="${ADAPTIVE_SHELL}"
+fi
+
+# __get_function_registry()
+#
+# Returns a function map by scanning all bash files
+# Output: JSON object with function names as keys and file paths as values
+__get_function_registry() {
+    local summary function_map
+    summary=$(bash_functions_summary "${ROOT}")
+
+    # Convert summary to a simple lookup map: {name: file, ...}
+    function_map=$(echo "$summary" | jq '
+        .functions | map({(.name): .file}) | add // {}
+    ')
+
+    echo "$function_map"
+}
+
 # file_dependencies <file>
 #
-# provides the utility functions which a given file uses
+# Provides the utility functions which a given file uses.
+# Output will be a JSON structure which honors the
+# `FileDependencies` type in static-types.ts
 function file_dependencies() {
     local -r file="${1:?no file passed to file_dependencies()!}"
 
-    # TODO
+    # Check if file exists and is readable
+    if [ ! -f "$file" ] || [ ! -r "$file" ]; then
+        echo '{"files":[],"functions":[]}'
+        return 1
+    fi
+
+    # Get the function registry (cached or fresh)
+    local registry
+    registry=$(__get_function_registry)
+
+    # JSON escape function (reuse from bash_functions_summary)
+    __fd_json_escape() {
+        local s=$1
+        s=${s//\\/\\\\}
+        s=${s//\"/\\\"}
+        s=${s//$'\n'/\\n}
+        s=${s//$'\r'/\\r}
+        s=${s//$'\t'/\\t}
+        printf '%s' "$s"
+    }
+    # shellcheck disable=SC2016
+
+    # Use awk to extract dependencies
+    awk_parse_dependencies='
+        # Remove comments and strings to avoid false matches
+        function clean_line(line,   i, c, in_s, in_d, esc, ch, result) {
+            in_s = in_d = esc = 0
+            result = ""
+
+            for (i = 1; i <= length(line); i++) {
+                ch = substr(line, i, 1)
+                if (esc) { esc = 0; result = result ch; continue }
+                if (ch == "\\\\") { esc = 1; result = result ch; continue }
+                if (!in_d && ch == "'\''") { in_s = !in_s; continue }
+                if (!in_s && ch == "\"") { in_d = !in_d; continue }
+                if (!in_s && !in_d && ch == "#") { break }
+                result = result ch
+            }
+            return result
+        }
+
+        # Remove strings from line for function call extraction
+        function remove_strings(line,   i, ch, in_s, in_d, esc, result) {
+            result = ""
+            in_s = in_d = esc = 0
+
+            for (i = 1; i <= length(line); i++) {
+                ch = substr(line, i, 1)
+
+                if (esc) {
+                    esc = 0
+                    result = result ch
+                    continue
+                }
+
+                if (ch == "\\") {
+                    esc = 1
+                    result = result ch
+                    continue
+                }
+
+                # Toggle single quote state
+                if (!in_d && ch == "'"'"'") {
+                    in_s = !in_s
+                    result = result ch
+                    continue
+                }
+
+                # Toggle double quote state
+                if (!in_s && ch == "\"") {
+                    in_d = !in_d
+                    result = result ch
+                    continue
+                }
+
+                # If we'"'"'re inside a string, replace with space
+                if (in_s || in_d) {
+                    result = result " "
+                } else {
+                    result = result ch
+                }
+            }
+            return result
+        }
+
+        # Extract file path from source/include statement
+        function extract_source_path(line,   path) {
+            if (match(line, /(source|\\.)[[:space:]]+("([^"]*)"|'\''([^'\'']*)'\''|([^[:space:];&|]+))/)) {
+                path = substr(line, RSTART, RLENGTH)
+                sub(/^(source|\\.)[[:space:]]+/, "", path)
+                if (match(path, /^"([^"]*)"$/)) {
+                    path = substr(path, 2, length(path) - 2)
+                } else if (match(path, /^'\''([^'\'']*)'\''$/)) {
+                    path = substr(path, 2, length(path) - 2)
+                }
+                sub(/[[:space:]]*$/, "", path)
+                return path
+            }
+            return ""
+        }
+
+        # Extract function calls from a line
+        function extract_function_calls(line,   calls, i, n, parts, word, prev_word, seen) {
+            calls = ""
+            delete seen
+
+            # Replace operators with spaces but preserve the line structure
+            gsub(/[|&;]/, " ", line)
+            # Remove parentheses and their contents for cleaner parsing
+            gsub(/\([^)]*\)/, " ", line)
+
+            n = split(line, parts, /[[:space:]]+/)
+
+            for (i = 1; i <= n; i++) {
+                word = parts[i]
+                if (word == "") continue
+
+                # Skip bash keywords (structural)
+                if (word ~ /^(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|local|declare|export|readonly)$/) continue
+
+                # Skip bash builtins that are never user functions
+                if (word ~ /^(source|\.)$/) continue
+
+                # Skip common command-line tools (not user functions)
+                if (word ~ /^(echo|printf|read|cd|pwd|ls|cat|grep|sed|awk|sort|uniq|head|tail|wc|tr|cut|find|which|command|type|test|exit)$/) continue
+
+                # Skip variable assignments
+                if (word ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue
+
+                # Skip variable expansions
+                if (word ~ /^\$/) continue
+
+                # Valid function name pattern
+                if (word ~ /^[A-Za-z_][A-Za-z0-9_]*$/) {
+                    # Avoid duplicates
+                    if (!(word in seen)) {
+                        seen[word] = 1
+                        if (calls != "") calls = calls " "
+                        calls = calls word
+                    }
+                }
+            }
+            return calls
+        }
+
+        {
+            line = $0
+            clean = clean_line(line)
+
+            if (clean ~ /(source|\\.)[[:space:]]+/) {
+                path = extract_source_path(clean)
+                if (path != "") {
+                    print "FILE:" path
+                }
+            }
+
+            # For function calls, remove strings BEFORE removing comments
+            # This preserves quote characters so we can properly remove string contents
+            no_strings = remove_strings(line)
+            # Now remove comments from the line with strings removed
+            clean_no_strings = clean_line(no_strings)
+            calls = extract_function_calls(clean_no_strings)
+            if (calls != "") {
+                split(calls, call_array, " ")
+                for (i in call_array) {
+                    if (call_array[i] != "") {
+                        print "FUNC:" call_array[i]
+                    }
+                }
+            }
+        }
+    '
+
+    # Process the file and collect dependencies
+    local -a function_candidates=() # Potential function calls
+    local -a validated_functions=() # Confirmed user-defined functions
+    local -a function_files=()      # Files containing validated functions
+
+    # Create temp file for awk output
+    local temp_output
+    temp_output=$(mktemp)
+    awk "$awk_parse_dependencies" "$file" 2>/dev/null > "$temp_output"
+
+    # Only collect function calls, ignore source statements
+    while IFS= read -r line; do
+        if [[ "$line" == FUNC:* ]]; then
+            function_candidates+=("${line#FUNC:}")
+        fi
+    done < "$temp_output"
+
+    # Clean up temp file
+    rm -f "$temp_output"
+
+    # Validate functions against registry and collect their source files
+    if [ "${#function_candidates[@]}" -gt 0 ]; then
+        for func in "${function_candidates[@]}"; do
+            [ -z "$func" ] && continue
+
+            # Check if function exists in registry
+            local func_file
+            func_file=$(echo "$registry" | jq -r --arg fn "$func" '.[$fn] // empty' 2>/dev/null)
+
+            if [ -n "$func_file" ]; then
+                # Function is valid - add to validated list
+                validated_functions+=("$func")
+                # Add its source file to our dependencies
+                function_files+=("$func_file")
+            fi
+        done
+    fi
+
+    # Deduplicate files
+    local -a files=()
+    if [ "${#function_files[@]}" -gt 0 ]; then
+        local temp_files
+        temp_files=$(mktemp)
+        printf '%s\n' "${function_files[@]}" | sort -u > "$temp_files"
+        while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            files+=("$path")
+        done < "$temp_files"
+        rm -f "$temp_files"
+    fi
+
+    # Deduplicate functions
+    local -a functions=()
+    if [ "${#validated_functions[@]}" -gt 0 ]; then
+        local temp_functions_output
+        temp_functions_output=$(mktemp)
+        printf '%s\n' "${validated_functions[@]}" | sort -u > "$temp_functions_output"
+        while IFS= read -r func; do
+            [ -z "$func" ] && continue
+            functions+=("$func")
+        done < "$temp_functions_output"
+        rm -f "$temp_functions_output"
+    fi
+
+    # Build JSON output
+    local files_json="["
+    local first=1
+    for path in "${files[@]}"; do
+        if [ $first -eq 1 ]; then
+            first=0
+        else
+            files_json+=","
+        fi
+        files_json+=$(printf '"%s"' "$(__fd_json_escape "$path")")
+    done
+    files_json+="]"
+
+    local functions_json="["
+    first=1
+    for func in "${functions[@]}"; do
+        if [ $first -eq 1 ]; then
+            first=0
+        else
+            functions_json+=","
+        fi
+        functions_json+=$(printf '"%s"' "$(__fd_json_escape "$func")")
+    done
+    functions_json+="]"
+
+    printf '{"files":%s,"functions":%s,"registry":%s}\n' "$files_json" "$functions_json" "$registry"
 }
 
 
@@ -323,7 +611,7 @@ bash_functions_summary() {
     local found=0
     local -a __BFS_NAMES=()
 
-    while IFS=$'\t' read -r name file start_block start end arguments description; do
+    while IFS=$'\t' read -r name fn_file start_block start end arguments description; do
         found=1
         __BFS_NAMES+=("$name")
 
@@ -338,7 +626,7 @@ bash_functions_summary() {
         fi
 
         esc_name=$(__bfs_json_escape "$name")
-        esc_file=$(__bfs_json_escape "$file")
+        esc_file=$(__bfs_json_escape "$fn_file")
         esc_args=$(__bfs_json_escape "$arguments")
         esc_desc=$(__bfs_json_escape "$description")
         functions_json+=$(printf '{"name":"%s","arguments":"%s","description":"%s","file":"%s","startBlock":%d,"start":%d,"end":%d}' \

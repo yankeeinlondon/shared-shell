@@ -23,12 +23,16 @@ function log() {
 }
 
 
+function out() {
+    printf "%b\\n" "${*}"
+}
+
 function panic() {
     local -r msg="${1:?no message passed to error()!}"
     local -ri code=$(( "${2:-1}" ))
     local -r fn="${3:-${FUNCNAME[1]}}" || echo "unknown"
 
-    log "\n  [${RED}x${RESET}] ${BOLD}ERROR ${DIM}${RED}$code${RESET}${BOLD} →${RESET} ${msg}" 
+    log "\n  [${RED}x${RESET}] ${BOLD}ERROR ${DIM}${RED}$code${RESET}${BOLD} →${RESET} ${msg}"
     log ""
     for i in "${!BASH_SOURCE[@]}"; do
         if ! contains "errors.sh" "${BASH_SOURCE[$i]}"; then
@@ -40,7 +44,7 @@ function panic() {
 }
 
 # debug <fn> <msg> <...>
-# 
+#
 # Logs to STDERR when the DEBUG env variable is set
 # and not equal to "false".
 function debug() {
@@ -52,7 +56,7 @@ function debug() {
 
             shift
             local regex=""
-            local lower_fn="" 
+            local lower_fn=""
             lower_fn=$(echo "$fn" | tr '[:upper:]' '[:lower:]')
             regex="(.*[^a-z]+|^)$lower_fn($|[^a-z]+.*)"
 

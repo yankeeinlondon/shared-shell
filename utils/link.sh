@@ -22,8 +22,9 @@ function link() {
     local -r text="${1:?no text passed to link() function}"
     local -r uri="${2:?no uri passed to link() function}"
 
+    # Use BEL (\007) terminator which works better with printf %b
     # shellcheck disable=SC2028
-    echo "\e]8;;${uri}\e\\${text}\e]8;;\e\\"
+    echo "\\033]8;;${uri}\\007${text}\\033]8;;\\007"
 }
 
 
@@ -35,10 +36,12 @@ function link_file() {
     local -r text="${1:?no text passed to link() function}"
     local -r file="${2:?no uri passed to link() function}"
 
-    local -r file_uri="$(ensure_starting "file://" "${file}")"
+    local file_uri
+    file_uri="$(ensure_starting "file://" "${file}" 2>/dev/null)"
 
+    # Use BEL (\007) terminator which works better with printf %b
     # shellcheck disable=SC2028
-    echo "\e]8;;${file_uri}\e\\${text}\e]8;;\e\\"
+    echo "\\033]8;;${file_uri}\\007${text}\\033]8;;\\007"
 }
 
 # link_repo <uri>

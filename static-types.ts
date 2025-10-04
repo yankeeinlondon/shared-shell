@@ -21,3 +21,12 @@ type FunctionSummary = {
     duplicates: string[]
 }
 
+
+type FileDependencies = {
+    /** the file which is being analyzed */
+    file: string;
+    /** the files -- in the utils directory -- of scripts this file depends on */
+    files: string[];
+    /** the utility functions which this function uses */
+    functions: string[];
+}
